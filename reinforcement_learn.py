@@ -1,102 +1,105 @@
 import numpy as np
 
-points_list = [(0,1), (1,5), (5,6), (5,4), (1,2), (2,3), (2,7)]
-goal = 12
+goal = 11
 
 # how many points in graph? x points
 MATRIX_SIZE = 16+1
+gamma = 0.8
 
+cc = 2
+I = -1*cc
+D  = +1*cc
+Ab = -1*cc
+Ar = +1*cc
+As = 0*cc
+
+rg = +5
+rr = -5
 # create matrix x*y
 R = np.matrix(np.ones(shape=(MATRIX_SIZE, MATRIX_SIZE)))
-R *= -2
+R *= -3
 
-R[1,1]=1
-R[1,2]=1
-R[2,2]=0
-R[2,1]=1
-R[2,3]=1
-R[3,2]=1
-R[3,4]=1
-R[3,3]=0
-R[4,8]=1
-R[4,4]=0
-R[8,4]=1
-R[8,7]=1
-R[8,12]=1
-R[8,8]=0
-R[7,8]=1 #I
-R[7,6]=-1 #D
-R[7,11]=1 #
-R[7,7]= 0
-R[6,6]=0
-R[6,7]= 1 #I
-R[6,5]= -1 #D
-R[6,10]= 1 #  A
-R[5,5]= -5 #  A
-R[5,6]= -5 #I
-R[5,9] = -5 #A
-R[9,5]= 1 # Arriba
-R[9,9]= 0 #
-R[9,10] = 1 #I   
-R[9,13] = 1 #ABajo  
-R[11,7] = 1 #A  
-R[11,12] = 1 #I
-R[11,10] = -1 #D
-R[11,11] = 0 #I
-R[10,6] = 1 #Ar
-R[10,9] = -1 #D
-R[10,11] = 1 #I
-R[10,10] = 0 #I
-R[12,12] = 5 #
-R[12,8] = 5 # AR
-R[12,11] = -5 #D
-R[13,13] = 0 #I
-R[13,9] = 1 #Ar
-R[13,14] = 1 #I
-R[14,13] = -1 #D
-R[14,15] = 1 #I
-R[14,14]= 0
-R[15,15] = 0
-R[15,16] = 1 #  I
-R[15,14] = -1 # D
-R[16,16] = 0
-R[16,15] = 1 #
+R[1,1]= As
+R[1,2]= D
 
+R[2,2]= As
+R[2,1]= I
+R[2,3]= D
 
+R[3,2]= I
+R[3,4]= D
+R[3,3]= As
+
+R[4,3]= I
+R[4,8]= Ab
+R[4,4]= As
+
+R[8,4]= Ar
+R[8,7]= I
+R[8,12]= Ab
+R[8,8]= As
+
+R[7,8]= D
+R[7,6]= I#D
+R[7,11]= Ab #
+R[7,7]= As
+
+R[6,6]= As
+R[6,7]= D#I
+R[6,5]= I #D
+R[6,10]= Ab#  A
+
+R[5,5]= rr #  A
+R[5,6]= rr #I
+R[5,9] = rr #A
+
+R[9,5]= Ar # Arriba
+R[9,9]= As #
+R[9,10] = D #I   
+R[9,13] = Ab #ABajo
+
+R[10,6] = Ar #Ar
+R[10,9] = I #D
+R[10,11] = D #I
+R[10,10] = As #I
+
+R[11,7] = Ar#A  
+R[11,12] = D #I
+R[11,10] = I #D
+R[11,11] = Ab #I
+
+R[12,12] = rg #
+R[12,8] = rg # AR
+R[12,11] = rg #D
+
+R[13,13] = As #I
+R[13,9] = Ar #Ar
+R[13,14] = D #I
+
+R[14,13] = I #D
+R[14,15] = D #I
+R[14,14]= As
+
+R[15,15] = As
+R[15,16] = D#  I
+R[15,14] = I # D
+
+R[16,16] = As
+R[16,15] = I#
 
 #print(R)
-# assign zeros to paths and 100 to goal-reaching point
-"""
-for point in points_list:
-    print(point)
-    if point[1] == goal:
-          R[point] = 100
-    else:
-          R[point] = 0
 
-    if point[0] == goal:
-          R[point[::-1]] = 100
-    else:
-          # reverse of point
-          R[point[::-1]]= 0
-    #print(R)
-    #print("\n")
-"""
-#print(R)
-# add goal point round trip
-#R[goal,goal]= 100
-#print(R)
 Q = np.matrix(np.zeros([MATRIX_SIZE,MATRIX_SIZE]))
 
 # learning parameter
-gamma = 1
+#print(Q)
 
 initial_state = 2
 
 
 def available_actions(state):
     current_state_row = R[state,]
-    av_act = np.where(current_state_row >= 0)[1]
+    av_act = np.where(current_state_row >= -2)[1]
     return av_act
 
 available_act = available_actions(initial_state) 
@@ -104,14 +107,17 @@ available_act = available_actions(initial_state)
 
 
 def sample_next_action(available_actions_range):
-    next_action = int(np.random.choice(available_act,1))
-    return next_action
+	next_action = int(np.random.choice(available_actions_range,1))
+	return next_action
 
 action = sample_next_action(available_act)
 
+
+c = 4
 def update(current_state, action, gamma):
     
   max_index = np.where(Q[action,] == np.max(Q[action,]))[1]
+
   
   if max_index.shape[0] > 1:
       max_index = int(np.random.choice(max_index, size = 1))
@@ -120,7 +126,7 @@ def update(current_state, action, gamma):
   max_value = Q[action, max_index]
   
   Q[current_state, action] = R[current_state, action] + gamma * max_value
-  print('max_value', R[current_state, action] + gamma * max_value)
+  print('max_value', R[current_state, action] + gamma * max_value +c) 
   
   if (np.max(Q) > 0):
     return(np.sum(Q/np.max(Q)*100))
@@ -138,7 +144,10 @@ for i in range(700):
     print("current_state",current_state)
     available_act = available_actions(current_state)
     print("available_act",available_act)
-    action = sample_next_action(available_act)
+    if len(available_act)>0:
+    	action = sample_next_action(available_act)
+    else:
+    	action = current_state
     print("action",action)
     score = update(current_state,action,gamma)
     scores.append(score)
@@ -150,13 +159,24 @@ print(Q/np.max(Q)*100)
 
 
 # Testing
-current_state = 0
+current_state = 1
+objetivo = 12
 steps = [current_state]
+print("\n")
+print("   -------------------------")
+print("   inicio :", current_state , "objetivo :", objetivo)
+print("     ")
+print("   Rs: ","Arriba ",Ar," Abajo ",Ab," Izquierda ",I, "Derecha ",D)
+print("   Rg: ",rg )
+print("   Rr: ",rr )
+print("   gamma :",gamma)
+print("   constante :",c)
+print("   -------------------------")
 
-while current_state != 7:
+while current_state != objetivo:
 
     next_step_index = np.where(Q[current_state,] == np.max(Q[current_state,]))[1]
-    print(next_step_index)
+    #print(next_step_index)
     
     if next_step_index.shape[0] > 1:
         next_step_index = int(np.random.choice(next_step_index, size = 1))
@@ -166,13 +186,7 @@ while current_state != 7:
     steps.append(next_step_index)
     current_state = next_step_index
 
-print("Most efficient path:")
-print(steps)
-print("0      1    2    3    4   5   6   7 ")
-print(R)
-
-#plt.plot(scores)
-#plt.show()
-#Most efficient path:
-#[0, 1, 2, 7]
+print("   Mas eficiente path:")
+print("   ",steps)
+print("\n")
 
